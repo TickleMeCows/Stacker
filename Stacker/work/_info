@@ -1,0 +1,150 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dC:/Users/skunk/Desktop/lab7_part2
+vcontrol
+Z1 !s110 1489535271
+!i10b 1
+!s100 `z7UA5f9:C`nAMogZ5jW:3
+IHI9ZZ>UK@GN5ENTP3io?>1
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+R0
+Z3 w1489535244
+Z4 8part2.v
+Z5 Fpart2.v
+L0 166
+Z6 OV;L;10.4d;61
+r1
+!s85 0
+31
+Z7 !s108 1489535271.000000
+Z8 !s107 vga_adapter/vga_pll.v|vga_adapter/vga_controller.v|vga_adapter/vga_address_translator.v|vga_adapter/vga_adapter.v|part2.v|
+Z9 !s90 -reportprogress|300|-timescale|1ns/1ns|part2.v|
+!i113 1
+Z10 o-timescale 1ns/1ns
+vdatapath
+R1
+!i10b 1
+!s100 mf;_<>ek;V0;cXzK?dN>V1
+InIh>XzF8Z`EXS?iO0?_Kn2
+R2
+R0
+R3
+R4
+R5
+L0 84
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
+vpart2
+R1
+!i10b 1
+!s100 :;Si9lLkci[PX?`28Om]H3
+I>82<0Jd2RELa>I^VSXf[`0
+R2
+R0
+R3
+R4
+R5
+L0 7
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
+vvga_adapter
+R1
+!i10b 1
+!s100 hkUB>b^KO=L]9S>>Mk8nj1
+IS`L4fJNF`TPeHDBOl;Y:S2
+R2
+R0
+Z11 w1489289492
+8vga_adapter/vga_adapter.v
+Fvga_adapter/vga_adapter.v
+L0 78
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
+vvga_address_translator
+R1
+!i10b 1
+!s100 3:mV5[e>gggL@b>hDoKk>3
+IO2GPN9AhdccW1Mc6iRUIO3
+R2
+R0
+R11
+8vga_adapter/vga_address_translator.v
+Fvga_adapter/vga_address_translator.v
+L0 4
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
+vvga_controller
+R1
+!i10b 1
+!s100 cVLRelV0U7V5APo3<>Q0P3
+IzD3L:Ll0R9_ZX8g[5RJZ82
+R2
+R0
+R11
+8vga_adapter/vga_controller.v
+Fvga_adapter/vga_controller.v
+L0 9
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
+vvga_pll
+R1
+!i10b 1
+!s100 4XSTjD`VEiamX^n1@5J`b3
+ILle68Pe[@80]XN9I5Sb?G2
+R2
+R0
+R11
+8vga_adapter/vga_pll.v
+Fvga_adapter/vga_pll.v
+L0 36
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
