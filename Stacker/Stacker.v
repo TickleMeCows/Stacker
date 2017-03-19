@@ -48,7 +48,7 @@ module part2
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
 	// image file (.MIF) for the controller.
-	/*vga_adapter VGA(
+	vga_adapter VGA(
 			.resetn(resetn),
 			.clock(CLOCK_50),
 			.colour(colour),
@@ -67,7 +67,6 @@ module part2
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
 		defparam VGA.BACKGROUND_IMAGE = "black.mif";
-			*/
 	// Put your code here. Your code should produce signals x,y,colour and writeEn/plot
 	// for the VGA controller, in addition to any other functionality your design may require.
     wire a,b, aout;
@@ -81,10 +80,17 @@ module part2
     
 endmodule
 
-module datapath(Colour, ResetN, in, OutX, OutY, OutC,clk, ldaluout,ctrlA, enable);
+
+	
+/*
+	This will make the blocks based
+
+*/
+module datapath(Colour, ResetN, in_y,in, OutX, OutY, OutC,clk, ldaluout, enable);
 	input ResetN, clk, ctrlA, enable, ldaluout;
 	input [2:0] Colour;
 	input [6:0] in;
+	input in_y;
 	output reg [7:0] OutX;
 	output reg [6:0] OutY;
 	output reg [2:0] OutC;
@@ -93,35 +99,28 @@ module datapath(Colour, ResetN, in, OutX, OutY, OutC,clk, ldaluout,ctrlA, enable
 	reg [2:0] oc;
 	reg [8:0] oxout;
 	reg [7:0] oyout;
-	reg [2:0]counterx,countery;
+	reg [6:0]counterx,countery;
 	
+	// Draw the 48x48 square
 	always @(posedge clk)
 	 begin : ALU
-		if (enable == 1'b0 && countery != 3'b101) begin // when we press key[1]
-			if (counterx < 3'b100) // increment x
-				begin
-					oxout = oxout + 1'b1;
-					counterx = counterx + 1'b1;
-				end
-			else if (counterx == 3'b100)
-				begin
-					oxout = oxout - 1'b1;
-					oyout = oyout + 1'b1;
-					countery = countery + 1'b1;
-					counterx = counterx + 1'b1;
-				end
-			else if (counterx < 4'b1000)
-				begin
-					oxout = oxout - 1'b1;
-					counterx = counterx + 1'b1;
-				end
-			else if (counterx == 4'b1001)
-				begin
-					counterx = 0;
-					oyout = oyout + 1'b1;
-					countery = countery + 1'b1;
-				end
-		end
+		if (!ResetN)
+			oxout <= 0;
+			oyout <= 0;
+		if (enable == 1'b0 && (counterx != 7'd48 || countery != 7'd48))
+			begin
+				if (counterx < 7'd48)
+					begin
+						oxout = oxout + 1'b1;
+						counterx = counterx + 1'b1;
+					end
+				if (counterx == 7'd48)
+					begin
+						oxout = 0;
+						counterx = 0;
+						countery = countery + 1'b1;
+					end
+			end
 	 end
 	
 	
@@ -134,8 +133,6 @@ module datapath(Colour, ResetN, in, OutX, OutY, OutC,clk, ldaluout,ctrlA, enable
 				oc <= 0;
 				counterx <= 0;
 				countery <= 0;
-				oxout <= 0;
-				oyout <= 0;
 			end
 		else
 			begin
@@ -163,10 +160,25 @@ module datapath(Colour, ResetN, in, OutX, OutY, OutC,clk, ldaluout,ctrlA, enable
 	 
 endmodule
 
-module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout);
+/*
+	Instructs where to draw the blocks
+	
+*/
+
+module blockmovement(clk,out_enable, out_y, out_x, colour,reset);
+	output reg out_y;
+	output reg out_x;
+	reg x;
+	if (!reset)
+	
+	
+	
+endmodule
+
+module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout, stopbutton);
 	output reg enable2;
 	output reg ldaluout;
-	reg [3:0] current_state, next_state;
+	reg [4:0] current_state, next_state;
 	input go, clk, ResetN, enable;
 	output reg ControlA, ControlB;
 	always@(posedge clk)
@@ -176,6 +188,80 @@ module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout);
        else
            current_state <= next_state;
    end // state_FFS
+	localparam LEVEL_1 = 5'd0, LEVEL_1_MOVE = 5'd1,
+				  LEVEL_2 = 5'd3, LEVEL_2_MOVE = 5'd4,
+				  LEVEL_3 = 5'd5, LEVEL_3_MOVE = 5'd6;
+				  LEVEL_4 = 5'd7, LEVEL_4_MOVE = 5'd8;
+				  LEVEL_5 = 5'd9, LEVEL_5_MOVE = 5'd10,
+				  LEVEL_6 = 5'd11, LEVEL_6_MOVE = 5'd12,
+				  LEVEL_7 = 5'd13, LEVEL_7_MOVE = 5'd14, 
+				  LEVEL_8 = 5'd15, LEVEL_8_MOVE = 5'd16,
+				  LEVEL_9 = 5'd17, LEVEL_9_MOVE = 5'd18,
+				  LEVEL_10 = 5'd19, LEVEL_10_MOVE = 5'd20;
+
+	reg anchor;
+	reg location;
+	
+	reg [5:0]counter;
+	reg direction;
+	reg anchor;
+	always @(posedge clk) // Store result in one array
+	begin
+		if (!ResetN)
+			counter <= 0;
+			direction <= 0;
+			anchor <= 0;
+		if (stopbutton == 1'b1) // keeping looping until we press the buttan
+			if (direction == 0) // right
+				counter = counter + 1'b1;
+			else if (direction == 1)
+				counter == counter - 1'b1;//
+			if (counter == 0 || counter == 5'd16) // end
+				direction = ~direction	// change directions
+		else
+			anchor <= counter; // Anchor the value here
+	end
+	always @(*)
+	begin
+		case(current_state)
+			LEVEL_1: begin 
+							//clock speed
+						end
+			LEVEL_1_MOVE: if begin end	// check if right
+			LEVEL_2: begin 
+							// clock speed
+						end
+			LEVEL_2_MOVE: if begin end
+			LEVEL_3: if begin 
+							// clock speed
+							end
+			LEVEL_3_MOVE: if begin end
+			LEVEL_4: if begin 
+							// clock speed
+							end
+			LEVEL_4_MOVE: if begin end
+			LEVEL_5: if begin 
+							// clock speed
+							end
+			LEVEL_5_MOVE: if begin end
+			LEVEL_6: if begin 
+							// clock speed
+							end
+			LEVEL_6_MOVE: if begin end
+			LEVEL_7: if begin 
+							// clock speed
+							end
+			LEVEL_7_MOVE: if begin end
+			LEVEL_8:  if begin 
+								// clock speed
+							 end
+			LEVEL_8_MOVE: if begin end
+			LEVEL_9: if begin end
+			LEVEL_9_MOVE: if begin end
+			LEVEL_10: if begin end
+			LEVEL_10_MOVE: if begin end
+		endcase
+	end
 	
 	always@(*)
 	begin: state_table
@@ -184,16 +270,26 @@ module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout);
 		ControlB = 1'b0;
 		enable2 = 1'b0;
 		case(current_state)
-			3'b000: next_state = go ? 3'b000: 3'b001; // Load X until
-			3'b001: next_state = go ? 3'b010: 3'b001; // Load X until 
-			3'b010: next_state = enable ? 3'b010: 3'b011; // Increment X hold it's value until we press key[1]
-			3'b011: next_state = enable ? 3'b011: 3'b010; // Increment Y hold it's value until we press key[1]
-		endcase
-		
-		case(current_state)
-			3'b000: begin ControlA = 1'b0; ldaluout = 1;end
-			3'b010: begin ControlA = 1'b1; enable2 = 1; ldaluout = 0;end
-			3'b011: begin ControlA = 1'b0; enable2 = 1; ldaluout = 0;end
+			LEVEL_1: next_state = stopbutton ? LEVEL_1 : LEVEL_1_MOVE; // stay on level 1 until they press a button
+			LEVEL_1_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_2; // Level 1 move is responsible for setting the inital values the block can be at we will keep those for all iterations
+			LEVEL_2: next_state = stopbutton ? LEVEL_2 : LEVEL_2_MOVE; // 
+			LEVEL_2_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_3; // 
+			LEVEL_3: next_state = stopbutton ? LEVEL_3 : LEVEL_3_MOVE; // 
+			LEVEL_3_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_4; // 
+			LEVEL_4: next_state = stopbutton ? LEVEL_4 : LEVEL_4_MOVE; // 
+			LEVEL_4_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_5; // 
+			LEVEL_5: next_state = stopbutton ? LEVEL_5 : LEVEL_5_MOVE; // 
+			LEVEL_5_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_6; // 
+			LEVEL_6: next_state = stopbutton ? LEVEL_6 : LEVEL_6_MOVE; // 
+			LEVEL_6_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_7; // 
+			LEVEL_7: next_state = stopbutton ? LEVEL_7 : LEVEL_7_MOVE; // 
+			LEVEL_7_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_8; // 
+			LEVEL_8: next_state = stopbutton ? LEVEL_8 : LEVEL_8_MOVE; // 
+			LEVEL_8_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_9; //
+			LEVEL_9: next_state = stopbutton ? LEVEL_9 : LEVEL_9_MOVE; // 
+			LEVEL_9_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_10; //
+			LEVEL_10: next_state = stopbutton ? LEVEL_10 : LEVEL_10_MOVE; // 
+			LEVEL_10_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_10; // 
 		endcase
 	end
 endmodule 
