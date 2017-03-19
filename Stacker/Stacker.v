@@ -69,13 +69,26 @@ module part2
 		defparam VGA.BACKGROUND_IMAGE = "black.mif";
 	// Put your code here. Your code should produce signals x,y,colour and writeEn/plot
 	// for the VGA controller, in addition to any other functionality your design may require.
-    wire a,b, aout;
-	 wire drawsquare;
-    // Instansiate datapath
-	// datapath d0(...);
-	datapath d0(.Colour(SW[9:7]),.ResetN(KEY[0]),.in(SW[6:0]),.ldaluout(aout),.OutX(x),.OutY(y),.OutC(colour),.clk(CLOCK_50),.ctrlA(a),.enable(KEY[1]));
-    // Instansiate FSM control
+   
+	
+	
+	
+	
+	wire [9:0] levels;
 	control c0(.go(KEY[3]),. ResetN(KEY[0]),. ControlA(a),. ControlB(b),.clk(CLOCK_50),.enable(KEY[1]),.ldaluout(aout));
+	
+	datapath l1(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[0]));
+	datapath l2(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[1]));
+	datapath l3(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[2]));
+	datapath l4(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[3]));
+	datapath l5(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[4]));
+	datapath l6(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[5]));
+	datapath l7(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[6]));
+	datapath l8(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[7]));
+	datapath l9(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[8]));
+	datapath l10(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[9]));
+	
+	
     // control c0(...);
     
 endmodule
@@ -86,11 +99,12 @@ endmodule
 	This will make the blocks based
 
 */
-module datapath(Colour, ResetN, in_y,in, OutX, OutY, OutC,clk, ldaluout, enable);
+module datapath(Colour, ResetN, in_y,in, OutX, OutY, OutC,clk, ldaluout, enable, blockenabled);
 	input ResetN, clk, ctrlA, enable, ldaluout;
 	input [2:0] Colour;
 	input [6:0] in;
 	input in_y;
+	input blockenabled
 	output reg [7:0] OutX;
 	output reg [6:0] OutY;
 	output reg [2:0] OutC;
@@ -100,63 +114,64 @@ module datapath(Colour, ResetN, in_y,in, OutX, OutY, OutC,clk, ldaluout, enable)
 	reg [8:0] oxout;
 	reg [7:0] oyout;
 	reg [6:0]counterx,countery;
-	
 	// Draw the 48x48 square
-	always @(posedge clk)
-	 begin : ALU
-		if (!ResetN)
-			oxout <= 0;
-			oyout <= 0;
-		if (enable == 1'b0 && (counterx != 7'd48 || countery != 7'd48))
-			begin
-				if (counterx < 7'd48)
+	if (blockenabled == 1'b1)
+		begin
+			always @(posedge clk)
+			 begin : ALU
+				if (!ResetN)
+					oxout <= 0;
+					oyout <= 0;
+				if (enable == 1'b0 && (counterx != 7'd48 || countery != 7'd48))
 					begin
-						oxout = oxout + 1'b1;
-						counterx = counterx + 1'b1;
+						if (counterx < 7'd48)
+							begin
+								oxout = oxout + 1'b1;
+								counterx = counterx + 1'b1;
+							end
+						if (counterx == 7'd48)
+							begin
+								oxout = 0;
+								counterx = 0;
+								countery = countery + 1'b1;
+							end
 					end
-				if (counterx == 7'd48)
+			 end
+			
+			
+			always @(posedge clk)
+			begin
+				if (!ResetN)
 					begin
-						oxout = 0;
-						counterx = 0;
-						countery = countery + 1'b1;
+						ox <= 8'd0;
+						oy <= 7'd0;
+						oc <= 0;
+						counterx <= 0;
+						countery <= 0;
+					end
+				else
+					begin
+						ox <= ldaluout ? {1'b0,in} : ox;
+						oy <= enable ? in : oy;
+						oc <= Colour;
 					end
 			end
-	 end
-	
-	
-	always @(posedge clk)
-	begin
-		if (!ResetN)
-			begin
-				ox <= 8'd0;
-				oy <= 7'd0;
-				oc <= 0;
-				counterx <= 0;
-				countery <= 0;
-			end
-		else
-			begin
-				ox <= ldaluout ? {1'b0,in} : ox;
-				oy <= enable ? in : oy;
-				oc <= Colour;
-			end
-	end
-	// Output result register
-    always @ (posedge clk) begin
-        if (!ResetN)
-		  begin
-            OutX <= 0;
-				OutY <= 0;
-				OutC <= 0;
-        end
-        else;
-				begin
+			// Output result register
+			always @ (posedge clk) begin
+				if (!ResetN)
+					begin
+						OutX <= 0;
+						OutY <= 0;
+						OutC <= 0;
+				end
+				else
+					begin
 						OutX <= ox + oxout;
 						OutY <= oy + oyout;
 						OutC <= oc;
-				end
-    end
-	 
+					end
+			end
+		end
 	 
 endmodule
 
@@ -175,9 +190,10 @@ module blockmovement(clk,out_enable, out_y, out_x, colour,reset);
 	
 endmodule
 
-module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout, stopbutton);
+module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout, stopbutton, levelen);
 	output reg enable2;
 	output reg ldaluout;
+	output reg [9:0] levelen;
 	reg [4:0] current_state, next_state;
 	input go, clk, ResetN, enable;
 	output reg ControlA, ControlB;
@@ -223,42 +239,58 @@ module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout, sto
 	end
 	always @(*)
 	begin
+		if (!ResetN)
+			levelen <= 0;
 		case(current_state)
 			LEVEL_1: begin 
 							//clock speed
+							levelen[0] <= 1'b1;
 						end
 			LEVEL_1_MOVE: if begin end	// check if right
 			LEVEL_2: begin 
 							// clock speed
+							levelen[1] <= 1'b1;
 						end
 			LEVEL_2_MOVE: if begin end
 			LEVEL_3: if begin 
 							// clock speed
+							levelen[2] <= 1'b1;
 							end
 			LEVEL_3_MOVE: if begin end
 			LEVEL_4: if begin 
 							// clock speed
+							levelen[3] <= 1'b1;
 							end
 			LEVEL_4_MOVE: if begin end
 			LEVEL_5: if begin 
 							// clock speed
+							levelen[4] <= 1'b1;
 							end
 			LEVEL_5_MOVE: if begin end
 			LEVEL_6: if begin 
 							// clock speed
+							levelen[5] <= 1'b1;
 							end
 			LEVEL_6_MOVE: if begin end
 			LEVEL_7: if begin 
 							// clock speed
+							levelen[6] <= 1'b1;
 							end
 			LEVEL_7_MOVE: if begin end
 			LEVEL_8:  if begin 
 								// clock speed
+								levelen[7] <= 1'b1;
 							 end
 			LEVEL_8_MOVE: if begin end
-			LEVEL_9: if begin end
+			LEVEL_9: if begin
+								// clock speed
+								levelen[8] <= 1'b1;
+							end
 			LEVEL_9_MOVE: if begin end
-			LEVEL_10: if begin end
+			LEVEL_10: if begin 
+								//clock speed
+								levelen[9] <= 1'b1;
+							end
 			LEVEL_10_MOVE: if begin end
 		endcase
 	end
@@ -273,7 +305,7 @@ module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout, sto
 			LEVEL_1: next_state = stopbutton ? LEVEL_1 : LEVEL_1_MOVE; // stay on level 1 until they press a button
 			LEVEL_1_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_2; // Level 1 move is responsible for setting the inital values the block can be at we will keep those for all iterations
 			LEVEL_2: next_state = stopbutton ? LEVEL_2 : LEVEL_2_MOVE; // 
-			LEVEL_2_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_3; // 
+			LEVEL_2_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_3; // if the anchor does not equal the counter they missed
 			LEVEL_3: next_state = stopbutton ? LEVEL_3 : LEVEL_3_MOVE; // 
 			LEVEL_3_MOVE: next_state = (anchor == counter) ? LEVEL_1 : LEVEL_4; // 
 			LEVEL_4: next_state = stopbutton ? LEVEL_4 : LEVEL_4_MOVE; // 
