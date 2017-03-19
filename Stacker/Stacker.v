@@ -73,23 +73,13 @@ module part2
 	
 	
 	
-	
+	wire [8:0] xconnect,yconnect;
 	wire [9:0] levels;
-	control c0(.go(KEY[3]),. ResetN(KEY[0]),. ControlA(a),. ControlB(b),.clk(CLOCK_50),.enable(KEY[1]),.ldaluout(aout));
+	control c0(.go(KEY[3]),. ResetN(KEY[0]),.clk(CLOCK_50),.enable(KEY[1]),.ldaluout(aout),.x(xconnect),.y(yconnect));
 	
-	datapath l1(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[0]));
-	datapath l2(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[1]));
-	datapath l3(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[2]));
-	datapath l4(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[3]));
-	datapath l5(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[4]));
-	datapath l6(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[5]));
-	datapath l7(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[6]));
-	datapath l8(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[7]));
-	datapath l9(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[8]));
-	datapath l10(,.Colour ,.ResetN(),. in_y(),. in(),. OutX(x),. OutY(y),. clk,. ldaluout(),. enable(),. blockenabled(level[9]));
+	datapath l1(,.Colour(colour) ,.ResetN(KEY[0]),. in_y(yconnect),. in(xconnect),. OutX(x),. OutY(y),. clk,. ldaluout(auot),. enable(),. blockenabled(level[0]));
 	
 	
-    // control c0(...);
     
 endmodule
 
@@ -115,63 +105,62 @@ module datapath(Colour, ResetN, in_y,in, OutX, OutY, OutC,clk, ldaluout, enable,
 	reg [7:0] oyout;
 	reg [6:0]counterx,countery;
 	// Draw the 48x48 square
-	if (blockenabled == 1'b1)
-		begin
-			always @(posedge clk)
-			 begin : ALU
-				if (!ResetN)
-					oxout <= 0;
-					oyout <= 0;
-				if (enable == 1'b0 && (counterx != 7'd48 || countery != 7'd48))
-					begin
-						if (counterx < 7'd48)
-							begin
-								oxout = oxout + 1'b1;
-								counterx = counterx + 1'b1;
-							end
-						if (counterx == 7'd48)
-							begin
-								oxout = 0;
-								counterx = 0;
-								countery = countery + 1'b1;
-							end
-					end
-			 end
+
+	always @(posedge clk)
+	begin : ALU
+		if (!ResetN || blockenabled = 1'b0)
+			oxout <= 0;
+			oyout <= 0;
+			counterx <= 0;
+			countery <= 0;
 			
-			
-			always @(posedge clk)
+		if (enable == 1'b0 && (counterx != 7'd48 || countery != 7'd48))
 			begin
-				if (!ResetN)
+				if (counterx < 7'd48)
 					begin
-						ox <= 8'd0;
-						oy <= 7'd0;
-						oc <= 0;
-						counterx <= 0;
-						countery <= 0;
+						oxout = oxout + 1'b1;
+						counterx = counterx + 1'b1;
 					end
-				else
+				if (counterx == 7'd48)
 					begin
-						ox <= ldaluout ? {1'b0,in} : ox;
-						oy <= enable ? in : oy;
-						oc <= Colour;
+						oxout = 0;
+						counterx = 0;
+						countery = countery + 1'b1;
 					end
 			end
-			// Output result register
-			always @ (posedge clk) begin
-				if (!ResetN)
-					begin
-						OutX <= 0;
-						OutY <= 0;
-						OutC <= 0;
-				end
-				else
-					begin
-						OutX <= ox + oxout;
-						OutY <= oy + oyout;
-						OutC <= oc;
-					end
+	end
+				
+	always @(posedge clk)
+	begin
+		if (!ResetN)
+			begin
+				ox <= 8'd0;
+				oy <= 7'd0;
+				oc <= 0;
+
 			end
+		else
+			begin
+				ox <= ldaluout ? {1'b0,in} : ox;
+				oy <= enable ? in : oy;
+				oc <= Colour;
+			end
+	end
+	// Output result register
+	always @ (posedge clk) begin
+		if (!ResetN)
+			begin
+				OutX <= 0;
+				OutY <= 0;
+				OutC <= 0;
 		end
+		else
+			begin
+				OutX <= ox + oxout;
+				OutY <= oy + oyout;
+				OutC <= oc;
+			end
+	end
 	 
 endmodule
 
@@ -190,13 +179,13 @@ module blockmovement(clk,out_enable, out_y, out_x, colour,reset);
 	
 endmodule
 
-module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout, stopbutton, levelen);
+module control(go, ResetN, clk,enable, enable2,ldaluout, stopbutton, levelen,x,y);
+	output reg [8:0] x,y;
 	output reg enable2;
 	output reg ldaluout;
 	output reg [9:0] levelen;
 	reg [4:0] current_state, next_state;
 	input go, clk, ResetN, enable;
-	output reg ControlA, ControlB;
 	always@(posedge clk)
    begin: state_FFs
        if(!ResetN)
@@ -244,51 +233,71 @@ module control(go, ResetN, ControlA, ControlB, clk,enable, enable2,ldaluout, sto
 		case(current_state)
 			LEVEL_1: begin 
 							//clock speed
+							y = 9'd480;
+							x = 0;
 							levelen[0] <= 1'b1;
 						end
-			LEVEL_1_MOVE: if begin end	// check if right
+			LEVEL_1_MOVE: if begin end	// 
 			LEVEL_2: begin 
 							// clock speed
+							y = 9'd432;
+							x = 0;
 							levelen[1] <= 1'b1;
 						end
 			LEVEL_2_MOVE: if begin end
 			LEVEL_3: if begin 
 							// clock speed
+							y = 9'd384;
+							x = 0;
 							levelen[2] <= 1'b1;
 							end
 			LEVEL_3_MOVE: if begin end
 			LEVEL_4: if begin 
 							// clock speed
+							y = 9'd336;
+							x = 0;
 							levelen[3] <= 1'b1;
 							end
 			LEVEL_4_MOVE: if begin end
 			LEVEL_5: if begin 
 							// clock speed
+							y = 9'd288;
+							x = 0;
 							levelen[4] <= 1'b1;
 							end
 			LEVEL_5_MOVE: if begin end
 			LEVEL_6: if begin 
 							// clock speed
+							y = 9'd240;
+							x = 0;
 							levelen[5] <= 1'b1;
 							end
 			LEVEL_6_MOVE: if begin end
 			LEVEL_7: if begin 
 							// clock speed
+							y = 9'd192;
+							x = 0;
 							levelen[6] <= 1'b1;
 							end
 			LEVEL_7_MOVE: if begin end
 			LEVEL_8:  if begin 
 								// clock speed
+								y = 9'd144;
+								x = 0;
 								levelen[7] <= 1'b1;
 							 end
 			LEVEL_8_MOVE: if begin end
 			LEVEL_9: if begin
 								// clock speed
+								y = 9'd96;
+								x = 0;
 								levelen[8] <= 1'b1;
 							end
 			LEVEL_9_MOVE: if begin end
 			LEVEL_10: if begin 
 								//clock speed
+								y = 9'd48;
+								x = 0;
 								levelen[9] <= 1'b1;
 							end
 			LEVEL_10_MOVE: if begin end
