@@ -75,11 +75,21 @@ module part2
 	
 	wire [8:0] xconnect,yconnect;
 	wire [9:0] levels;
+	wire pulse_connect; //divider to the two datapaths enable
+	
+	rateDivider rd1(.inputNum(28'd0), .clock(CLOCK_50), .reset_n(KEY[0]), .pulse(pulse_connect));
+	
 	control c0(.go(KEY[3]),. ResetN(KEY[0]),.clk(CLOCK_50),.enable(KEY[1]),.ldaluout(aout),.x(xconnect),.y(yconnect));
 	
-	datapath l1(,.Colour(colour) ,.ResetN(KEY[0]),. in_y(yconnect),. in(xconnect),. OutX(x),. OutY(y),. clk,. ldaluout(auot),. enable(),. blockenabled(level[0]));
+	datapath l1(.Colour(colour) ,.ResetN(KEY[0]),. in_y(yconnect),. in(xconnect),. OutX(x),. OutY(y),. clk,. ldaluout(auot),. enable(),. blockenabled(level[0]));
 	
+	//still need to figure out inputs
 	
+	//connected to clock_50, but enabled by the rate divider.
+	//in/outputs may be incorrect
+	datapath erase_block(.Colour(3b'000), .ResetN(KEY[0]), .in_y(yconnect), .in(xconnect), .OutX(x), .OutY(y), .clk(CLOCK_50), .ldaluout(aout), .enable(pulse_connect), .blockenabled(level[0]));//the one used to erase the block during animation (the current x/y coords, colour 3b'000 (black))
+	
+	datapath draw_new(.Colour(colour), .ResetN(KEY[0]), .in_y(yconnect), .in(xconnect + 28'd48), .OutX(x), .OutY(y), .clk(CLOCK_50), .ldaluout(aout), .enable(pulse_connect), .blockenabled(level[0])); //the one ysed to draw the new block during animation  (current x +48, y coords, usual colour)
     
 endmodule
 
@@ -334,3 +344,35 @@ module control(go, ResetN, clk,enable, enable2,ldaluout, stopbutton, levelen,x,y
 		endcase
 	end
 endmodule 
+
+//one second clock divider
+module rateDivider(inputNum, clock, reset_n, pulse);
+	input [27:0]inputNum;
+	input clock, reset_n;
+	output pulse;
+	
+	reg [27:0] counterNum;
+	reg [27:0] currentRate = 28'b0010111110101111000010000000;
+	
+	assign pulse = (counterNum == currentRate) ? 1 : 0;
+	
+	
+	always @(posedge clock, negedge reset_n)
+	begin
+		if (reset_n == 1'b0)
+			counterNum <= 0;
+		//else if (par_load == 1'b1)//useful for later load
+		//	counterNum <= inputNum; //useful for later load
+			
+		else if(enable == 1'b1)
+			begin
+				if(counterNum == currentRate)
+					counterNum <= 0;
+				else
+					counterNum <= counterNum + 1'b1;
+			end 
+	
+	end 
+
+endmodule
+
